@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
+
 use App\Http\Traits\CanLoadRelationships;
 use App\Http\Resources\AttendeeResource;
 use App\Models\Attendee;
@@ -13,6 +14,14 @@ class AttendeeController extends Controller
 
     use CanLoadRelationships;
     private array $relations = ['user'];
+
+    public function __construct()
+    {
+        $this->middleware('auth:sanctum')->except(['index', 'show', 'update']);
+        $this->middleware('throttle:api')
+            ->only(['store', 'destroy']);
+        $this->authorizeResource(Attendee::class, 'attendee');
+    }
     /**
      * Display a listing of the resource.
      */
@@ -33,7 +42,7 @@ class AttendeeController extends Controller
     {
         $attendee = $this->loadRelationships(
             $event->attendees()->create([
-                'user_id' => 1
+                'user_id' => $request->user()->id
             ])
         );
 
@@ -59,7 +68,7 @@ class AttendeeController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(String $event, Attendee $attendee)
+    public function destroy(Event $event, Attendee $attendee)
     {
         $attendee->delete();
 
